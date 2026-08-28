@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Drift",
+  "version": "0.1.0",
+  "description": "An AI task manager that organizes your browser around your work.",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["identity", "storage"],
+  "host_permissions": [
+    "https://eu-north-1hiw10emnf.auth.eu-north-1.amazoncognito.com/*",
+    "https://*.amazoncognito.com/*"
+  ]
+}
