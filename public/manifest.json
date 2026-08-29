@@ -6,9 +6,13 @@
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["identity", "storage"],
+  "permissions": ["identity", "storage", "tabs"],
   "host_permissions": [
     "https://eu-north-1hiw10emnf.auth.eu-north-1.amazoncognito.com/*",
     "https://*.amazoncognito.com/*"
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
 }

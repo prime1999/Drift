@@ -3,15 +3,6 @@ const COGNITO_DOMAIN =
 
 const CLIENT_ID = "1vhrvge8nu9m7f60js6jb0h78m";
 
-type AuthSession = {
-  access_token: string;
-  id_token: string;
-  refresh_token?: string;
-  expires_in: number;
-  token_type: string;
-  expires_at: number;
-};
-
 function base64UrlEncode(buffer: ArrayBuffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
     .replace(/\+/g, "-")
@@ -38,9 +29,22 @@ async function createCodeChallenge(verifier: string) {
   return base64UrlEncode(digest);
 }
 
-export async function signInWithGoogle(): Promise<AuthSession> {
+function decodeJwt(token: string) {
+  const payload = token.split(".")[1];
+
+  if (!payload) {
+    throw new Error("Invalid ID token");
+  }
+
+  const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+
+  return JSON.parse(decoded);
+}
+
+export async function signInWithGoogle() {
   const codeVerifier = generateRandomString();
   const codeChallenge = await createCodeChallenge(codeVerifier);
+
   const state = generateRandomString(32);
 
   const redirectUri = chrome.identity.getRedirectURL();
@@ -56,18 +60,12 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     state,
   });
 
-  const authUrl = `${COGNITO_DOMAIN}/oauth2/authorize?${params.toString()}`;
-
-  console.log("AUTH URL:", authUrl);
-  console.log("REDIRECT:", redirectUri);
+  const authUrl = `${COGNITO_DOMAIN}/oauth2/authorize?${params}`;
 
   const responseUrl = await chrome.identity.launchWebAuthFlow({
     url: authUrl,
     interactive: true,
   });
-
-  console.log("========== AUTH FINISHED ==========");
-  console.log("RESPONSE URL:", responseUrl);
 
   if (!responseUrl) {
     throw new Error("No response URL");
@@ -81,28 +79,22 @@ export async function signInWithGoogle(): Promise<AuthSession> {
     throw new Error("Invalid OAuth state");
   }
 
-  const error = callbackUrl.searchParams.get("error");
-
-  if (error) {
-    const description = callbackUrl.searchParams.get("error_description");
-
-    throw new Error(description || error);
-  }
-
   const code = callbackUrl.searchParams.get("code");
 
   if (!code) {
-    throw new Error("No authorization code returned");
-  }
+    const error = callbackUrl.searchParams.get("error");
 
-  console.log("Authorization code received");
+    throw new Error(error || "No authorization code returned");
+  }
 
   // Exchange authorization code for Cognito tokens
   const tokenResponse = await fetch(`${COGNITO_DOMAIN}/oauth2/token`, {
     method: "POST",
+
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
+
     body: new URLSearchParams({
       grant_type: "authorization_code",
       client_id: CLIENT_ID,
@@ -113,58 +105,39 @@ export async function signInWithGoogle(): Promise<AuthSession> {
   });
 
   if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
+    const error = await tokenResponse.text();
 
-    console.error("Token exchange failed:", errorText);
-
-    throw new Error(`Token exchange failed: ${tokenResponse.status}`);
+    throw new Error(`Token exchange failed: ${error}`);
   }
 
   const tokens = await tokenResponse.json();
 
-  console.log("Tokens received from Cognito");
+  // Get user information from Cognito ID token
+  const user = decodeJwt(tokens.id_token);
 
-  const authSession: AuthSession = {
-    access_token: tokens.access_token,
-    id_token: tokens.id_token,
-    refresh_token: tokens.refresh_token,
-    expires_in: tokens.expires_in,
-    token_type: tokens.token_type,
-    expires_at: Date.now() + tokens.expires_in * 1000,
+  const auth = {
+    ...tokens,
+
+    user: {
+      id: user.sub,
+      name: user.nickname,
+      email: user.email,
+      picture: user.picture,
+    },
   };
 
-  // IMPORTANT:
-  // Persist authentication so it survives reopening
-  // the extension and opening another tab.
+  // Persist authentication
   await chrome.storage.local.set({
-    auth: authSession,
+    auth,
   });
 
-  console.log("Authentication saved");
-
-  return authSession;
+  return auth;
 }
 
-export async function getStoredAuth(): Promise<AuthSession | null> {
+export async function getStoredAuth() {
   const result = await chrome.storage.local.get("auth");
 
-  const auth = result.auth as AuthSession | undefined;
-
-  if (!auth) {
-    return null;
-  }
-
-  // Check whether access token has expired
-  if (auth.expires_at && Date.now() >= auth.expires_at) {
-    console.log("Stored authentication has expired");
-
-    // We'll add refresh-token handling next.
-    await chrome.storage.local.remove("auth");
-
-    return null;
-  }
-
-  return auth;
+  return result.auth || null;
 }
 
 export async function signOut() {
@@ -175,8 +148,6 @@ export async function signOut() {
     `?client_id=${encodeURIComponent(CLIENT_ID)}` +
     `&logout_uri=${encodeURIComponent(logoutUri)}`;
 
-  console.log("LOGOUT URL:", logoutUrl);
-
   try {
     await chrome.identity.launchWebAuthFlow({
       url: logoutUrl,
@@ -186,7 +157,6 @@ export async function signOut() {
     console.error("Cognito logout error:", error);
   }
 
-  // Always clear the local extension session
   await chrome.storage.local.remove("auth");
 
   console.log("Logged out successfully");

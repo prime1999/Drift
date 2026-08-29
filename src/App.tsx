@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { signInWithGoogle, getStoredAuth, signOut } from "./auth/auth";
+import { signInWithGoogle, getStoredAuth } from "./auth/auth";
+import femaleImage from "../public/images/female.jpg";
+import MainTab from "./components/MainTab";
 
 function App() {
   const [auth, setAuth] = useState<any>(null);
@@ -10,7 +12,6 @@ function App() {
     async function loadAuth() {
       try {
         const storedAuth = await getStoredAuth();
-
         setAuth(storedAuth);
       } catch (error) {
         console.error(error);
@@ -32,57 +33,57 @@ function App() {
       setAuth(tokens);
     } catch (error) {
       console.error("Login failed:", error);
-
       setError(error instanceof Error ? error.message : "Login failed");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleLogout() {
-    await signOut();
-
-    setAuth(null);
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!auth) {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold">Welcome to Drift</h1>
-
-        <button
-          onClick={handleLogin}
-          className="mt-4 rounded-lg bg-black px-5 py-3 text-white"
-        >
-          Continue with Google
-        </button>
-
-        {error && <p className="mt-4 text-red-500">{error}</p>}
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold">Welcome to Drift</h1>
+    <main className="relative min-h-screen overflow-hidden">
+      {/* Background image */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${femaleImage})`,
+        }}
+      />
 
-      <p className="mt-2">You are authenticated.</p>
+      {/* Overlay */}
+      <div className="fixed inset-0 z-10 bg-black/60" />
 
-      <button
-        onClick={handleLogout}
-        className="mt-4 rounded-lg border px-5 py-3"
-      >
-        Sign out
-      </button>
-    </div>
+      {/* Content */}
+      <div className="relative z-20 min-h-screen">
+        {loading ? (
+          <div className="flex min-h-screen items-center justify-center text-white">
+            Loading...
+          </div>
+        ) : !auth ? (
+          <div className="w-full min-h-screen flex flex-col items-center justify-center p-6 z-50">
+            <h1 className="text-xl text-white font-bold">DRIFT</h1>
+            <h3 className="text-xl font-bold text-white mb-4">
+              Your browser, finally in sync with your work.
+            </h3>
+            <p className="mx-auto mt-6 max-w-lg rounded-2xl border border-white/20 bg-white/10 p-4 text-sm text-center leading-7 text-white/80 shadow-lg backdrop-blur-md">
+              Drift turns your browser into a focused workspace that understands
+              what you are working on, keeps what matters within reach, and
+              helps you move forward without the tab chaos.
+            </p>
+
+            <button
+              onClick={handleLogin}
+              className="mt-4 text-sm rounded-lg py-2 px-6 font-semiold bg-white text-black transition-all duration-200 cursor-pointer hover:bg-white/90"
+            >
+              Get Started
+            </button>
+
+            {error && <p className="mt-4 text-red-500">{error}</p>}
+          </div>
+        ) : (
+          <MainTab auth={auth} setAuth={setAuth} />
+        )}
+      </div>
+    </main>
   );
 }
 
