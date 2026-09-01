@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { signOut } from "../auth/auth";
+import TaskBox from "./TaskBox";
 
 type Props = {
   auth: any;
@@ -52,6 +53,9 @@ const MainTab = ({ auth, setAuth }: Props) => {
         >
           Sign Out
         </button>
+      </div>
+      <div className="absolute z-50 bottom-5 right-5">
+        <TaskBox />
       </div>
     </main>
   );
