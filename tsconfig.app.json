@@ -27,5 +27,5 @@
     "noFallthroughCasesInSwitch": true
   },
 
-  "include": ["src"]
+  "include": ["src", "@/components/ui/popover.tsx", "@/components/ui/card.tsx"]
 }

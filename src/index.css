@@ -1,12 +1,36 @@
 @import "tailwindcss";
 
 :root {
+  --background: oklch(0.12 0.01 240);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.15 0.01 240);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.16 0.01 240);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.54 0.17 250);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.22 0.02 240);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.2 0.015 240);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.24 0.02 240);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.7 0.22 25);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.28 0.02 240);
+  --input: oklch(0.24 0.02 240);
+  --ring: oklch(0.7 0.15 250);
+  --chart-1: oklch(0.65 0.2 40);
+  --chart-2: oklch(0.7 0.14 210);
+  --chart-3: oklch(0.72 0.15 270);
+  --chart-4: oklch(0.78 0.18 90);
+  --chart-5: oklch(0.74 0.18 330);
+  --radius: 0.625rem;
+
   --text: #6b6375;
   --text-h: #08060d;
   --bg: transparent;
-  --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
@@ -21,7 +45,8 @@
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
 
-  color: var(--text);
+  color: var(--foreground);
+  background: var(--background);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -36,12 +61,33 @@ body,
   min-height: 100%;
   margin: 0;
   padding: 0;
-  background: transparent !important;
+  background: #121212 !important;
+  color: #f4f4f5;
 }
 
 body {
   min-height: 100vh;
   overflow: hidden;
+  background: #121212;
+  color: #f4f4f5;
+}
+
+.rdp,
+.rdp * {
+  color: var(--card-foreground);
+  background: transparent;
+}
+
+.rdp {
+  background: var(--card);
+  color: var(--card-foreground);
+}
+
+button,
+input,
+textarea,
+select {
+  color: inherit;
 }
 
 #root {
